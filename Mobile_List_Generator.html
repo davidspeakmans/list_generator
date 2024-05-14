@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            color: #333;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        #list-title-input, #file-input {
+            margin-bottom: 10px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #list-title {
+            font-size: 18px;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+        #user-title {
+            font-size: 18px;
+            text-align: left;
+        }
+        #list-generator {
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="number"], input[type="file"] {
+            padding: 6px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: calc(100% - 20px);
+            box-sizing: border-box;
+        }
+        button {
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            background-color: #0056b3;
+            transform: translateY(1px);
+        }
+        #input-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 5px;
+        }
+        #list-items {
+            list-style-type: none;
+            padding: 0;
+        }
+        #list-items li {
+            margin-bottom: 3px;
+        }
+        @media screen and (min-width: 400px) {
+            body {
+                margin: 20px;
+            }
+            h1 {
+                font-size: 36px;
+            }
+            h2 {
+                font-size: 24px;
+            }
+            input[type="text"], input[type="number"], input[type="file"] {
+                width: auto;
+            }
+        }
+        @media print {
+            #list-title-input, #file-input, #input-section, button {
+                display: none;
+            }
+            #user-title {
+                text-align: center;
+                font-size: 18px;
+            }
+            h2 {
+                text-align: center;
+                font-size: 18px;
+            }
+            #list-items li {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>List Generator</h1>
+    
+    <div id="list-title">
+        Enter List Title:
+    </div>
+    <input type="text" id="list-title-input" placeholder="Enter list title">
+    
+    <div id="list-generator">
+        <h2>List Items:</h2>
+        <ul id="list-items">
+        </ul>
+    </div>
+
+    <div id="input-section">
+        <input type="file" id="file-input">
+        <input type="text" id="new-item" placeholder="Enter new item">
+        <input type="number" id="priority" placeholder="Enter priority (numeric)">
+        <button onclick="addItem()">Add Item</button>
+        <input type="number" id="delete-item" placeholder="Enter item number to delete">
+        <button onclick="deleteItem()">Delete Item</button>
+        <button onclick="printList()">Print List</button>
+        <button onclick="saveList()">Save List</button>
+        <button onclick="shareListByEmail()">Share List by Email</button>
+    </div>
+
+    <script>
+        let listItems = [];
+
+        function displayList() {
+            const listContainer = document.getElementById("list-items");
+            listContainer.innerHTML = "";
+            listItems.forEach((item, index) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${index + 1}. ${item.task} - Priority: ${item.priority}`;
+                listContainer.appendChild(listItem);
+            });
+        }
+
+        function addItem() {
+            const newItem = document.getElementById("new-item").value;
+            const priority = parseInt(document.getElementById("priority").value);
+            if (isNaN(priority)) {
+                alert("Please enter a numeric priority value.");
+                return;
+            }
+            if (newItem.trim() !== "") {
+                listItems.push({ task: newItem, priority: priority });
+                listItems.sort((a, b) => a.priority - b.priority); // Sort by priority
+                displayList();
+                document.getElementById("new-item").value = "";
+                document.getElementById("priority").value = "";
+            }
+        }
+
+        function deleteItem() {
+            const itemNumber = parseInt(document.getElementById("delete-item").value);
+            if (!isNaN(itemNumber) && itemNumber >= 1 && itemNumber <= listItems.length) {
+                listItems.splice(itemNumber - 1, 1);
+                displayList();
+                document.getElementById("delete-item").value = "";
+            } else {
+                alert("Invalid item number!");
+            }
+        }
+
+        function printList() {
+            const listHTML = document.getElementById("list-items").innerHTML;
+            const title = document.getElementById("list-title-input").value;
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>' + title + '</title></head><body>');
+            printWindow.document.write('<h1 id="user-title">' + title + '</h1>');
+            printWindow.document.write('<ul>');
+            listItems.forEach(item => {
+                printWindow.document.write(`<li>${item.task} - Priority: ${item.priority}</li>`);
+            });
+            printWindow.document.write('</ul>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.getElementById('user-title').style.textAlign = 'left';
+            printWindow.document.getElementById('user-title').style.fontSize = '18px';
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function saveList() {
+            const title = document.getElementById("list-title-input").value;
+            const listText = listItems.map(item => `${item.task} - Priority: ${item.priority}`).join("\n");
+            const blob = new Blob([listText], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = title + ".txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function shareListByEmail() {
+            const title = document.getElementById("list-title-input").value;
+            const listText = listItems.map(item => `${item.task} - Priority: ${item.priority}`).join("\n");
+            const mailtoLink = "mailto:?subject=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(listText);
+            window.location.href = mailtoLink;
+        }
+
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fileContent = e.target.result;
+                // Parse file content and populate listItems
+                listItems = parseFileContent(fileContent);
+                displayList();
+            };
+            reader.readAsText(file);
+        });
+
+        function parseFileContent(content) {
+            // Custom logic to parse file content and return listItems
+            const lines = content.split('\n');
+            const parsedList = lines.map(line => {
+                const [task, priority] = line.split(' - Priority: ');
+                return { task, priority };
+            });
+            return parsedList;
+        }
+    </script>
+</body>
+</html>
